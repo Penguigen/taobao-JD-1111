@@ -1,10 +1,6 @@
 /**
  * 淘宝+京东双十一活动脚本
  * 支持淘宝\支付宝\京东任务自动执行
- *
- * Date: 2020/10/27
- * Time: 21:16
- * Versions: 2.2.2
  */
 
 try {
@@ -15,25 +11,21 @@ try {
     exit();
 }
 
-console.show();
 //初始化参数
-versions = 'V2.2.2';
+versions = 'V2.3.0';
 speed = 1;
 float = 1.25;
 patNum = 0;
-swipeTips = "滑啊滑啊滑啊滑";
+swipeTips = "滑啊滑啊滑啊滑ヽ(￣▽￣)ﾉ";
 taskChooseList = ["淘宝赚喵币", "淘宝拍猫猫", "支付宝赚喵币", "京东全民营业", "调节脚本速度"];
 speedChooseList = [0.75, 1, 1.25, 1.5, 1.75, 2, 3];
 taobaoActivityData = "taobao://pages.tmall.com/wow/z/hdwk/act-20201111/index";
 activityActivityData = "alipays://platformapi/startapp?appId=68687502";
-
-height = device.height;
 width = device.width;
+height = device.height;
 setScreenMetrics(width, height);
 
-positive = false;
-speedAdjustment = false;
-alert("【淘宝+京东双十一活动脚本 " + versions + "】", "脚本执行过程请勿手动点击按钮，否则脚本执行可能会错乱，导致任务失败\n\n执行淘宝任务时请确保使用低版本淘宝（V9.5及以下），否则无法获取奖励\n\n");
+alert("【淘宝+京东双十一活动脚本 " + versions + "】", "脚本执行过程请勿手动点击按钮，否则脚本执行可能会错乱，导致任务失败\n\n执行淘宝任务时请确保使用低版本淘宝（V9.5及以下），否则无法获取奖励\n");
 // 选择任务
 taskChoose();
 
@@ -50,7 +42,7 @@ function taskChoose() {
     options.indexOf(4) > -1 && speedChoose();
     //选中拍猫猫时弹出次数选择
     if (options.indexOf(1) > -1) {
-        var frequencyOptions = [10, 30, 50, 100, 200, 300];
+        var frequencyOptions = [50, 100, 200, 300, 400, 500];
         var i = dialogs.select(
             "拍猫猫次数",
             frequencyOptions
@@ -83,7 +75,7 @@ function speedChoose() {
  * @param options 选项数组
  */
 function runOptions(options) {
-
+    console.show();
     log("淘宝+京东双十一活动脚本" + versions + "\n");
     log("脚本执行期间请勿手动点击按钮");
     log("当前脚本操作时间间隔为【" + speed + "倍】");
@@ -117,7 +109,7 @@ function runOptions(options) {
                 break;
         }
     });
-    alert("任务已完成", "所有任务貌似都做完啦！\n若仍有任务请重新运行噢！\n\n");
+    alert("任务已完成", "所有任务貌似都做完啦！\n若仍有任务请重新运行噢！\n");
 }
 
 /**
@@ -159,7 +151,13 @@ function runTaobao(appName, activityData, taskList) {
                 case '去完成':
                     log("开始【" + task + "】任务");
                     clickButton(button);
-                    randomSleep(3000 * speed);
+                    randomSleep(500 * speed);
+                    //若未点击成功，则再次点击
+                    while (textContains(task).exists()) {
+                        clickButton(button);
+                        randomSleep(300 * speed);
+                    }
+                    randomSleep(2500 * speed);
                     if (textContains("复制链接").exists()) {
                         log("跳过分享任务");
                         j++;
@@ -198,9 +196,14 @@ function runTaobao(appName, activityData, taskList) {
                 case '去观看':
                 case '去浏览':
                     log("开始【" + task + "】任务")
-                    randomSleep(500 * speed);
                     clickButton(button);
-                    randomSleep(4000 * speed);
+                    randomSleep(500 * speed);
+                    //若未点击成功，则再次点击
+                    while (textContains(task).exists()) {
+                        clickButton(button);
+                        randomSleep(300 * speed);
+                    }
+                    randomSleep(3500 * speed);
                     if (textContains("观看").exists() && textContains("关注").exists()) {
                         //进入直播页面直接等待，不滑屏
                         randomSleep(18000 * speed);
@@ -288,8 +291,9 @@ function runJd(taskList) {
                     randomSleep(1000 * speed);
                     break;
                 case '去完成':
+                    var k = 0;
                     jdClickButton(button);
-                    randomSleep(3000 * speed);
+                    randomSleep(1000 * speed);
                     if (className("android.view.View").textContains("取消").exists()) {
                         log("跳过助力任务");
                         j++;
@@ -297,16 +301,34 @@ function runJd(taskList) {
                         clickContent("取消");
                         randomSleep(1000 * speed);
                         break;
+                    } else {
+                        randomSleep(1000 * speed);
+                        //若未点击成功，则再点击五次，仍未成功则跳过
+                        while (textContains(task).exists() && k < 5) {
+                            jdClickButton(button);
+                            randomSleep(300 * speed);
+                            k++;
+                        }
+                        if (k >= 5) {
+                            log("跳过该任务");
+                            break;
+                        }
                     }
-                    //若未点击成功，则再次点击
-                    while (textContains(task).exists()) {
-                        jdClickButton(button);
-                        randomSleep(300 * speed);
-                    }
-                    if (textContains("任意浏览").exists() || textContains("任意加购").exists() || textContains("联合开卡").exists() || textContains("商圈红包").exists()) {
+                    randomSleep(2000 * speed);
+                    if (textContains("联合开卡").exists() || textContains("商圈红包").exists()) {
                         log("跳过任务");
                         j++;
                         i++;
+                        back();
+                        randomSleep(500 * speed);
+                        break;
+                    } else if (textContains("任意浏览").exists()) {
+                        jdBrowsingOrShopping("浏览");
+                        back();
+                        randomSleep(500 * speed);
+                        break;
+                    } else if (textContains("任意加购").exists()) {
+                        jdBrowsingOrShopping("加购");
                         back();
                         randomSleep(500 * speed);
                         break;
@@ -339,6 +361,53 @@ function runJd(taskList) {
     });
     toastLog("【京东】任务已完成");
     log("=========================");
+}
+
+/**
+ * 京东浏览/加购任务
+ * @param taskName 任务名：浏览/加购
+ */
+function jdBrowsingOrShopping(taskName) {
+    log("进入【" + taskName + "】任务");
+    toastLog("日志窗口已隐藏");
+    console.hide();
+    randomSleep(200 * speed);
+    for (i = 0; i < 6; i++) {
+        if (i == 4) {
+            toastLog(swipeTips);
+            randomSwipe();
+            randomSleep(500 * speed);
+        }
+        var price = textContains("¥").findOnce(i);
+        var goods = price.parent().parent();
+        var suffix = i == 5 ? "(容错)" : '';
+        log(taskName + "第" + (i + 1) + "个商品" + suffix);
+        if (taskName == "浏览") {
+            jdClickButton(goods);
+            randomSleep(1000 * speed);
+            //若未点击成功，则再次点击
+            while (textContains("任意浏览").exists()) {
+                jdClickButton(goods);
+                randomSleep(300 * speed);
+            }
+            randomSleep(3000 * speed);
+            //商品页可能会有缺货弹窗，点掉
+            if (textContains("取消").exists()) {
+                clickContent("取消");
+                randomSleep(500 * speed);
+            }
+            toastLog(swipeTips);
+            randomSwipe();
+            randomSleep(1000 * speed);
+            back();
+            randomSleep(1500 * speed);
+        } else if (taskName == "加购") {
+            var shopping = goods.child(goods.child(0).text() == "已加购" ? 5 : 4);
+            click(shopping.bounds().centerX(), shopping.bounds().centerY());
+            randomSleep(2500 * speed);
+        }
+    }
+    console.show();
 }
 
 /**
@@ -393,7 +462,7 @@ function clickContent(content, type, sleepTime) {
  */
 function clickButton(button) {
     var bounds = button.bounds();
-    press(random(bounds.left, bounds.right), random(bounds.top, bounds.bottom), random(50, 350));
+    press(random(bounds.left, bounds.right), random(bounds.top, bounds.bottom), random(50, 100));
 }
 
 /**
@@ -404,7 +473,8 @@ function clickButton(button) {
 function jdClickButton(button) {
     var bounds = button.bounds();
     var width = bounds.right - bounds.left;
-    press(random(bounds.left + width / 5, bounds.right - width / 5), random(bounds.top, bounds.bottom), random(50, 350));
+    var high = bounds.top - bounds.bottom;
+    press(random(bounds.left + width / 4, bounds.right - width / 4), random(bounds.top + high / 3, bounds.bottom - high / 3), random(50, 100));
 }
 
 /**
